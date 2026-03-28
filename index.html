@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abhishek Garg — 3D Universe</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;background:#02020e;}
+body{font-family:'Rajdhani',sans-serif;color:#e0e8ff;cursor:none;}
+
+#c{position:fixed;inset:0;z-index:0;}
+
+/* CURSOR */
+#cur{position:fixed;width:10px;height:10px;background:#00fff0;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .15s,height .15s;}
+#cur2{position:fixed;width:40px;height:40px;border:1px solid rgba(0,255,240,.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .12s,top .12s,width .2s,height .2s;}
+body.clicking #cur{width:20px;height:20px;}
+body.clicking #cur2{width:60px;height:60px;border-color:rgba(0,255,240,.7);}
+
+/* LOADING */
+#loader{position:fixed;inset:0;background:#02020e;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s;}
+#loader.out{opacity:0;pointer-events:none;}
+.l-title{font-family:'Orbitron',monospace;font-size:3.5rem;font-weight:900;color:#00fff0;letter-spacing:.2em;animation:glitch 2s infinite;}
+@keyframes glitch{
+  0%,94%,100%{text-shadow:0 0 30px rgba(0,255,240,.6);}
+  95%{text-shadow:-3px 0 #ff00cc,3px 0 #00fff0;transform:skewX(-2deg);}
+  97%{text-shadow:3px 0 #ff00cc,-3px 0 #00fff0;transform:skewX(2deg);}
+}
+.l-sub{font-size:.7rem;letter-spacing:.3em;color:#334;margin-top:.5rem;text-transform:uppercase;}
+.l-bar{width:240px;height:1px;background:#111;margin-top:2rem;overflow:hidden;}
+.l-fill{height:100%;background:linear-gradient(90deg,#00fff0,#a855f7);animation:lf 2.2s ease forwards;}
+@keyframes lf{from{width:0}to{width:100%}}
+.l-pct{font-family:'Orbitron',monospace;font-size:.65rem;color:#334;margin-top:.5rem;animation:countUp 2.2s ease forwards;}
+
+/* UI OVERLAY */
+#ui{position:fixed;inset:0;z-index:10;pointer-events:none;}
+
+/* NAV */
+#nav{
+  position:absolute;top:0;left:0;right:0;
+  padding:1.2rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  pointer-events:auto;
+}
+#nav::after{
+  content:'';position:absolute;bottom:0;left:2.5rem;right:2.5rem;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,240,.2),transparent);
+}
+.logo{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;letter-spacing:.15em;}
+.logo-ag{color:#00fff0;text-shadow:0 0 20px rgba(0,255,240,.5);}
+.logo-dot{color:#a855f7;}
+.logo-dev{color:rgba(255,255,255,.4);font-weight:400;font-size:.9rem;}
+.nav-links{display:flex;gap:.25rem;}
+.nl{
+  font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:.12em;
+  padding:.4rem .9rem;border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);
+  cursor:pointer;transition:all .25s;text-transform:uppercase;
+  clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+  pointer-events:auto;
+}
+.nl:hover,.nl.on{border-color:rgba(0,255,240,.4);color:#00fff0;background:rgba(0,255,240,.06);box-shadow:0 0 15px rgba(0,255,240,.1);}
+
+/* HERO */
+#hero{
+  position:absolute;top:50%;left:6%;transform:translateY(-50%);
+  pointer-events:none;
+}
+.h1{font-family:'Orbitron',monospace;font-size:clamp(2.5rem,5.5vw,5rem);font-weight:900;line-height:.9;letter-spacing:-.02em;}
+.h1-name{color:rgba(255,255,255,.9);}
+.h1-glow{
+  display:block;color:#00fff0;margin-top:.15rem;
+  text-shadow:0 0 30px rgba(0,255,240,.4),0 0 60px rgba(0,255,240,.15);
+  animation:hglow 4s ease-in-out infinite;
+}
+@keyframes hglow{0%,100%{text-shadow:0 0 30px rgba(0,255,240,.4),0 0 60px rgba(0,255,240,.15);}50%{text-shadow:0 0 50px rgba(0,255,240,.7),0 0 100px rgba(0,255,240,.3),0 0 150px rgba(0,255,240,.1);}}
+.h-role{
+  font-size:.8rem;letter-spacing:.2em;color:rgba(255,255,255,.35);
+  text-transform:uppercase;margin-top:1rem;
+  display:flex;align-items:center;gap:.7rem;
+}
+.h-role::before{content:'';width:30px;height:1px;background:#00fff0;}
+.h-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1.2rem;}
+.chip{
+  font-size:.6rem;letter-spacing:.08em;padding:.25rem .7rem;
+  border:1px solid;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);
+}
+.c1{border-color:rgba(0,255,240,.3);color:#00fff0;background:rgba(0,255,240,.05);}
+.c2{border-color:rgba(168,85,247,.3);color:#c084fc;background:rgba(168,85,247,.05);}
+.c3{border-color:rgba(251,146,60,.3);color:#fb923c;background:rgba(251,146,60,.05);}
+.cta-row{display:flex;gap:.6rem;margin-top:1.5rem;pointer-events:auto;}
+.cta{
+  font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.1em;
+  padding:.6rem 1.4rem;cursor:pointer;transition:all .25s;text-transform:uppercase;
+  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+  border:none;
+}
+.cta-p{background:#00fff0;color:#02020e;font-weight:700;}
+.cta-p:hover{background:#fff;box-shadow:0 0 30px rgba(0,255,240,.4);}
+.cta-s{background:transparent;color:#00fff0;border:1px solid rgba(0,255,240,.3);}
+.cta-s:hover{background:rgba(0,255,240,.08);}
+
+/* GLASS PANEL */
+.gpanel{
+  position:absolute;top:50%;right:2.5%;transform:translateY(-50%);
+  width:min(420px,45vw);
+  background:rgba(2,5,20,.75);
+  border:1px solid rgba(0,255,240,.12);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  padding:1.8rem;
+  pointer-events:auto;
+  transition:opacity .4s,transform .4s;
+  clip-path:polygon(14px 0%,100% 0%,100% calc(100% - 14px),calc(100% - 14px) 100%,0% 100%,0% 14px);
+  overflow:hidden;
+}
+.gpanel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,240,.4),transparent);
+}
+.gpanel::after{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,rgba(0,255,240,.4),transparent);
+}
+.gpanel.off{opacity:0;transform:translateY(-50%) translateX(20px);pointer-events:none;}
+
+.ph{font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:#00fff0;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem;}
+.ph::before{content:'//';color:rgba(0,255,240,.4);}
+
+/* STAT GRID */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.2rem;}
+.sc{
+  background:rgba(0,255,240,.04);border:1px solid rgba(0,255,240,.1);
+  padding:.7rem .5rem;text-align:center;
+  clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);
+}
+.sv{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:#00fff0;}
+.sl{font-size:.55rem;color:rgba(255,255,255,.3);margin-top:.15rem;letter-spacing:.03em;}
+
+/* SKILL BARS */
+.sb-item{margin-bottom:.75rem;}
+.sb-top{display:flex;justify-content:space-between;font-size:.7rem;margin-bottom:.25rem;}
+.sb-n{color:rgba(255,255,255,.8);}
+.sb-v{font-family:'Orbitron',monospace;font-size:.58rem;color:#00fff0;}
+.sb-track{height:3px;background:rgba(255,255,255,.05);overflow:hidden;}
+.sb-fill{height:100%;transition:width 1.4s cubic-bezier(.22,1,.36,1);}
+
+/* PROJECT CARDS */
+.pc{
+  border:1px solid rgba(255,255,255,.07);padding:.9rem 1rem;
+  margin-bottom:.5rem;background:rgba(255,255,255,.02);
+  transition:all .2s;cursor:pointer;
+  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+  position:relative;overflow:hidden;
+}
+.pc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,240,.05),transparent);opacity:0;transition:opacity .2s;}
+.pc:hover{border-color:rgba(0,255,240,.25);transform:translateX(3px);}
+.pc:hover::after{opacity:1;}
+.pt{font-size:.8rem;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:.25rem;}
+.ps{font-size:.63rem;color:rgba(255,255,255,.35);}
+.pm{font-size:.65rem;color:#00fff0;margin-top:.25rem;}
+
+/* ACH */
+.ai{display:flex;align-items:flex-start;gap:.7rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.aib{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);}
+.at{font-size:.75rem;color:rgba(255,255,255,.85);font-weight:600;}
+.as{font-size:.6rem;color:rgba(255,255,255,.3);margin-top:.1rem;}
+
+/* CONTACT */
+.ci{display:flex;align-items:center;gap:.7rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.cib{width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.7rem;border:1px solid rgba(0,255,240,.2);color:#00fff0;flex-shrink:0;}
+.cv{font-size:.73rem;color:rgba(255,255,255,.8);}
+.cl{font-size:.58rem;color:rgba(255,255,255,.3);}
+
+/* ROTATE HINT */
+#rhint{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;animation:fi 1s 3s both;}
+@keyframes fi{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%);}}
+.rh{font-size:.58rem;letter-spacing:.2em;color:rgba(255,255,255,.2);text-transform:uppercase;}
+.rha{width:1px;height:24px;background:linear-gradient(to bottom,transparent,#00fff0);margin:.4rem auto 0;animation:rp 2s infinite;}
+@keyframes rp{0%,100%{opacity:.2;}50%{opacity:.8;}}
+
+/* CORNER DECO */
+.corner{position:absolute;width:20px;height:20px;pointer-events:none;}
+.corner-tl{top:1.4rem;left:1.4rem;border-top:1px solid rgba(0,255,240,.3);border-left:1px solid rgba(0,255,240,.3);}
+.corner-br{bottom:1.4rem;right:1.4rem;border-bottom:1px solid rgba(0,255,240,.3);border-right:1px solid rgba(0,255,240,.3);}
+
+/* SCROLL SECTION LABEL */
+#slabel{position:absolute;bottom:1.5rem;right:2.5rem;font-family:'Orbitron',monospace;font-size:.5rem;letter-spacing:.2em;color:rgba(0,255,240,.2);text-transform:uppercase;pointer-events:none;}
+
+/* CLICK RIPPLE */
+.ripple{position:fixed;border-radius:50%;border:1px solid rgba(0,255,240,.6);pointer-events:none;z-index:9997;animation:rp2 .6s ease-out forwards;}
+@keyframes rp2{from{width:0;height:0;opacity:.8;transform:translate(-50%,-50%);}to{width:80px;height:80px;opacity:0;transform:translate(-50%,-50%);}}
+
+@media(max-width:680px){
+  #hero{left:3%;top:28%;transform:none;}
+  .h1{font-size:2rem;}
+  .gpanel{width:94vw;right:50%;top:68%;transform:translate(50%,0);}
+  .nav-links .nl{font-size:.45rem;padding:.3rem .5rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="l-title">AG</div>
+  <div class="l-sub">Portfolio · 3D Universe · 2025</div>
+  <div class="l-bar"><div class="l-fill"></div></div>
+  <div class="l-pct" id="lpct">0%</div>
+</div>
+
+<div id="cur"></div><div id="cur2"></div>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-br"></div>
+
+  <div id="nav">
+    <div class="logo"><span class="logo-ag">AG</span><span class="logo-dot">·</span><span class="logo-dev">dev</span></div>
+    <div class="nav-links">
+      <div class="nl on" onclick="sp('about')">About</div>
+      <div class="nl" onclick="sp('skills')">Skills</div>
+      <div class="nl" onclick="sp('projects')">Work</div>
+      <div class="nl" onclick="sp('wins')">Wins</div>
+      <div class="nl" onclick="sp('contact')">Contact</div>
+    </div>
+  </div>
+
+  <div id="hero">
+    <div class="h1">
+      <span class="h1-name">Abhishek</span>
+      <span class="h1-glow">Garg</span>
+    </div>
+    <div class="h-role">SDET · Test Automation Engineer</div>
+    <div class="h-chips">
+      <span class="chip c1">Playwright</span>
+      <span class="chip c1">Cucumber BDD</span>
+      <span class="chip c2">Node.js</span>
+      <span class="chip c2">React.js</span>
+      <span class="chip c3">80% Less Manual</span>
+      <span class="chip c3">KocharTech</span>
+    </div>
+    <div class="cta-row">
+      <button class="cta cta-p" onclick="sp('contact')">Hire Me</button>
+      <button class="cta cta-s" onclick="sp('projects')">View Work</button>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="gpanel" id="p-about">
+    <div class="ph">Profile · Abhishek Garg</div>
+    <div class="sgrid">
+      <div class="sc"><div class="sv">80%</div><div class="sl">Manual cut</div></div>
+      <div class="sc"><div class="sv">40%</div><div class="sl">Faster bugs</div></div>
+      <div class="sc"><div class="sv">8.37</div><div class="sl">CGPA</div></div>
+      <div class="sc"><div class="sv">4+</div><div class="sl">Projects</div></div>
+      <div class="sc"><div class="sv">30%</div><div class="sl">Coverage +</div></div>
+      <div class="sc"><div class="sv">4</div><div class="sl">Hackathons</div></div>
+    </div>
+    <p style="font-size:.74rem;color:rgba(255,255,255,.4);line-height:1.75;margin-bottom:1rem;">
+      SDET Intern at <span style="color:#00fff0">KocharTech, Amritsar</span> — engineering full test automation coverage of the Knowmax platform with Playwright + Cucumber BDD. Passionate about modular, scalable frameworks.
+    </p>
+    <div style="font-size:.7rem;color:rgba(255,255,255,.6);display:flex;flex-direction:column;gap:.35rem;">
+      <div>📍 Punjab, India &nbsp;·&nbsp; May 2025 – Present</div>
+      <div>🎓 B.E. CS · Chitkara University · 2022–Present</div>
+      <div style="color:#00fff0">🟢 Open to SDET / QA Automation / Full-Stack roles</div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="gpanel off" id="p-skills">
+    <div class="ph">Technical Skills</div>
+    <div id="sbars"></div>
+    <div style="margin-top:.8rem;font-size:.63rem;color:rgba(255,255,255,.25);line-height:1.7;">
+      Testing: Functional · Regression · Smoke · Integration · Performance · API<br>
+      Tools: JIRA · CI/CD · Git · Agile · REST APIs · Postman
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="gpanel off" id="p-projects">
+    <div class="ph">Projects Built</div>
+    <div class="pc"><div class="pt">Knowmax Automation Framework</div><div class="ps">Playwright · Cucumber.js · BDD · POM · Gherkin</div><div class="pm">↓ 65% manual effort · Full E2E + API coverage</div></div>
+    <div class="pc"><div class="pt">Course Crafter — LMS</div><div class="ps">React.js · Node.js · MongoDB · Express · Razorpay</div><div class="pm">OTP auth · Role-based access · Payment gateway</div></div>
+    <div class="pc"><div class="pt">Hospital Management System</div><div class="ps">C++ · OOP · DSA</div><div class="pm">1000+ records managed · Console-based</div></div>
+    <div class="pc"><div class="pt">Car Rental System</div><div class="ps">Java · OOP</div><div class="pm">Full booking lifecycle · Customer onboarding</div></div>
+  </div>
+
+  <!-- WINS -->
+  <div class="gpanel off" id="p-wins">
+    <div class="ph">Achievements</div>
+    <div class="ai"><div class="aib">🏆</div><div><div class="at">Winner — CODE 'N' CONNECT</div><div class="as">GDSC · Coding & technical excellence</div></div></div>
+    <div class="ai"><div class="aib">🥇</div><div><div class="at">Round 1 Winner — Solving for India</div><div class="as">GFG + Google · National hackathon</div></div></div>
+    <div class="ai"><div class="aib">✍️</div><div><div class="at">Best Technical Blog — Techacks 3.0</div><div class="as">Outstanding technical writing award</div></div></div>
+    <div class="ai"><div class="aib">🏅</div><div><div class="at">Top 10 Team — Joget Hackathon</div><div class="as">Ranked top 10 among all national teams</div></div></div>
+    <div style="margin-top:.8rem;font-size:.63rem;color:rgba(255,255,255,.25);">
+      📜 Decode DSA with C++ · PW Skills &nbsp;|&nbsp; Java with DSA · Apna College
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="gpanel off" id="p-contact">
+    <div class="ph">Get In Touch</div>
+    <div class="ci"><div class="cib">@</div><div><div class="cv">abhishekgarg142003@gmail.com</div><div class="cl">Email</div></div></div>
+    <div class="ci"><div class="cib">☎</div><div><div class="cv">+91 79730 01034</div><div class="cl">Phone</div></div></div>
+    <div class="ci"><div class="cib">in</div><div><div class="cv">linkedin.com/in/abhishek-garg</div><div class="cl">LinkedIn</div></div></div>
+    <div class="ci"><div class="cib">⌥</div><div><div class="cv">github.com/abhishek-garg</div><div class="cl">GitHub</div></div></div>
+    <div style="margin-top:1rem;padding:.8rem;background:rgba(0,255,240,.05);border:1px solid rgba(0,255,240,.12);font-size:.7rem;color:#00fff0;text-align:center;letter-spacing:.06em;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);">
+      Open to opportunities · Punjab, India
+    </div>
+  </div>
+
+  <div id="rhint"><div class="rh">Drag to explore universe</div><div class="rha"></div></div>
+  <div id="slabel" id="slbl">SDET Portfolio · 2025</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─── CURSOR ─────────────────────────────────────────────
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+document.addEventListener('mousedown',()=>document.body.classList.add('clicking'));
+document.addEventListener('mouseup',()=>document.body.classList.remove('clicking'));
+document.addEventListener('click',e=>{
+  const r=document.createElement('div');r.className='ripple';r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';
+  document.body.appendChild(r);setTimeout(()=>r.remove(),600);
+});
+(function ar(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cur2.style.left=rx+'px';cur2.style.top=ry+'px';requestAnimationFrame(ar);})();
+
+// ─── LOADER COUNT ────────────────────────────────────────
+let pct=0;const lp=document.getElementById('lpct');
+const li=setInterval(()=>{pct=Math.min(pct+Math.random()*4,100);lp.textContent=Math.floor(pct)+'%';if(pct>=100)clearInterval(li);},60);
+
+// ─── THREE SETUP ─────────────────────────────────────────
+const W=innerWidth,H=innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(W,H);
+renderer.setClearColor(0x02020e,1);
+renderer.shadowMap.enabled=true;
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x02020e,0.018);
+const cam=new THREE.PerspectiveCamera(65,W/H,.1,500);
+cam.position.set(0,0,22);
+
+// ─── LIGHTS ──────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x080820,.8));
+const pl1=new THREE.PointLight(0x00fff0,3,40);pl1.position.set(0,0,5);scene.add(pl1);
+const pl2=new THREE.PointLight(0xa855f7,2,35);pl2.position.set(-10,8,-5);scene.add(pl2);
+const pl3=new THREE.PointLight(0xff2f7b,1.5,30);pl3.position.set(10,-6,-8);scene.add(pl3);
+
+// ─── STAR FIELD ──────────────────────────────────────────
+const sg=new THREE.BufferGeometry();
+const N=5000,sp2=new Float32Array(N*3),sc=new Float32Array(N*3);
+for(let i=0;i<N;i++){
+  sp2[i*3]=(Math.random()-.5)*400;sp2[i*3+1]=(Math.random()-.5)*400;sp2[i*3+2]=(Math.random()-.5)*400;
+  const c=Math.random();sc[i*3]=c*.3;sc[i*3+1]=c*.5+.5;sc[i*3+2]=1;
+}
+sg.setAttribute('position',new THREE.BufferAttribute(sp2,3));
+sg.setAttribute('color',new THREE.BufferAttribute(sc,3));
+scene.add(new THREE.Points(sg,new THREE.PointsMaterial({size:.12,vertexColors:true,transparent:true,opacity:.8})));
+
+// ─── NEBULA RING ─────────────────────────────────────────
+const nebulaGroup=new THREE.Group();
+for(let i=0;i<3;i++){
+  const r=8+i*3,segs=200;
+  const nPos=new Float32Array(segs*3),nCol=new Float32Array(segs*3);
+  for(let j=0;j<segs;j++){
+    const a=(j/segs)*Math.PI*2+i*.5;
+    const jitter=(Math.random()-.5)*.8;
+    nPos[j*3]=Math.cos(a)*(r+jitter);nPos[j*3+1]=(Math.random()-.5)*1.5;nPos[j*3+2]=Math.sin(a)*(r+jitter);
+    nCol[j*3]=i===0?.0:i===1?.5:.8;nCol[j*3+1]=i===0?1:i===1?.3:.1;nCol[j*3+2]=i===0?1:i===1?1:.5;
+  }
+  const ng=new THREE.BufferGeometry();
+  ng.setAttribute('position',new THREE.BufferAttribute(nPos,3));
+  ng.setAttribute('color',new THREE.BufferAttribute(nCol,3));
+  const np=new THREE.Points(ng,new THREE.PointsMaterial({size:.12,vertexColors:true,transparent:true,opacity:.5}));
+  np.userData.speed=.001*(i+1)*.5;np.userData.tilt=i*.3;
+  nebulaGroup.add(np);
+}
+nebulaGroup.rotation.x=.3;
+scene.add(nebulaGroup);
+
+// ─── CENTRAL MORPHING POLYHEDRON ─────────────────────────
+const morphGroup=new THREE.Group();
+const baseGeos=[
+  new THREE.IcosahedronGeometry(2.5,2),
+  new THREE.OctahedronGeometry(2.8,2),
+  new THREE.TetrahedronGeometry(2.6,3),
+];
+// Wireframe outer shell
+const wfGeo=new THREE.IcosahedronGeometry(2.5,2);
+const wfMat=new THREE.MeshBasicMaterial({color:0x00fff0,wireframe:true,transparent:true,opacity:.15});
+const wfMesh=new THREE.Mesh(wfGeo,wfMat);
+morphGroup.add(wfMesh);
+// Solid core
+const solidGeo=new THREE.IcosahedronGeometry(2.3,2);
+const solidMat=new THREE.MeshPhongMaterial({
+  color:0x001a2e,emissive:0x003344,
+  transparent:true,opacity:.7,
+  shininess:80,
+});
+const solidMesh=new THREE.Mesh(solidGeo,solidMat);
+morphGroup.add(solidMesh);
+// Outer glow ring
+const glowGeo=new THREE.TorusGeometry(3.4,.04,8,100);
+const glowMat=new THREE.MeshBasicMaterial({color:0x00fff0,transparent:true,opacity:.4});
+const glowTorus=new THREE.Mesh(glowGeo,glowMat);
+glowTorus.rotation.x=Math.PI/2;
+morphGroup.add(glowTorus);
+// 2nd orbit ring
+const orb2=new THREE.Mesh(new THREE.TorusGeometry(4.2,.03,8,80),new THREE.MeshBasicMaterial({color:0xa855f7,transparent:true,opacity:.3}));
+orb2.rotation.x=Math.PI/3;orb2.rotation.y=Math.PI/4;
+morphGroup.add(orb2);
+// 3rd orbit ring
+const orb3=new THREE.Mesh(new THREE.TorusGeometry(5,.025,8,80),new THREE.MeshBasicMaterial({color:0xff2f7b,transparent:true,opacity:.25}));
+orb3.rotation.x=-Math.PI/5;orb3.rotation.z=Math.PI/6;
+morphGroup.add(orb3);
+morphGroup.position.set(-5,0,-2);
+scene.add(morphGroup);
+
+// ─── ORBITING SATELLITES ─────────────────────────────────
+const satGroup=new THREE.Group();
+satGroup.position.copy(morphGroup.position);
+const satData=[
+  {r:6,speed:.008,size:.25,color:0x00fff0,phi:.5},
+  {r:7,speed:.006,size:.2,color:0xa855f7,phi:1.2},
+  {r:5.5,speed:.011,size:.18,color:0xff2f7b,phi:2.1},
+  {r:8,speed:.005,size:.3,color:0xfb923c,phi:.8},
+  {r:6.5,speed:.009,size:.15,color:0x00fff0,phi:3.2},
+];
+const sats=satData.map(d=>{
+  const g=new THREE.OctahedronGeometry(d.size,0);
+  const m=new THREE.MeshPhongMaterial({color:d.color,emissive:d.color,emissiveIntensity:.5,transparent:true,opacity:.9});
+  const mesh=new THREE.Mesh(g,m);
+  mesh.userData={...d,angle:Math.random()*Math.PI*2};
+  satGroup.add(mesh);
+  return mesh;
+});
+scene.add(satGroup);
+
+// ─── FLOATING TECH CARDS (3D planes) ─────────────────────
+const cardGroup=new THREE.Group();
+const cardData=[
+  {x:8,y:4,z:-3,w:3,h:1.8,color:0x00fff0,label:'PLAYWRIGHT'},
+  {x:10,y:0,z:-5,w:2.8,h:1.6,color:0xa855f7,label:'BDD'},
+  {x:7,y:-4,z:-4,w:3.2,h:1.8,color:0xff2f7b,label:'NODE.JS'},
+  {x:12,y:2,z:-8,w:2.5,h:1.5,color:0xfb923c,label:'REACT'},
+  {x:9,y:-2,z:-2,w:2.8,h:1.6,color:0x00fff0,label:'JAVA'},
+];
+cardData.forEach((d,i)=>{
+  const cg=new THREE.Group();
+  // Card background
+  const bg=new THREE.Mesh(
+    new THREE.PlaneGeometry(d.w,d.h),
+    new THREE.MeshBasicMaterial({color:0x010510,transparent:true,opacity:.6,side:THREE.DoubleSide})
+  );
+  cg.add(bg);
+  // Card border (edges)
+  const eg=new THREE.EdgesGeometry(new THREE.PlaneGeometry(d.w,d.h));
+  const el=new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:d.color,transparent:true,opacity:.5}));
+  cg.add(el);
+  // Inner glow line
+  const ig=new THREE.EdgesGeometry(new THREE.PlaneGeometry(d.w-.12,d.h-.12));
+  const il=new THREE.LineSegments(ig,new THREE.LineBasicMaterial({color:d.color,transparent:true,opacity:.2}));
+  cg.add(il);
+  // Corner accent
+  const pts=[
+    new THREE.Vector3(-d.w/2,-d.h/2+.3,0),new THREE.Vector3(-d.w/2,-d.h/2,0),new THREE.Vector3(-d.w/2+.3,-d.h/2,0)
+  ];
+  const cornerGeo=new THREE.BufferGeometry().setFromPoints(pts);
+  cg.add(new THREE.Line(cornerGeo,new THREE.LineBasicMaterial({color:d.color,opacity:.8,transparent:true})));
+
+  cg.position.set(d.x,d.y,d.z);
+  cg.rotation.y=-0.3+(i%3-1)*.15;
+  cg.rotation.x=(.5-Math.random())*.2;
+  cg.userData={baseY:d.y,phase:i*1.3,idx:i};
+  cardGroup.add(cg);
+});
+scene.add(cardGroup);
+
+// ─── HEXAGONAL GRID ──────────────────────────────────────
+const hexGroup=new THREE.Group();
+for(let row=-4;row<=4;row++){
+  for(let col=-8;col<=0;col++){
+    const h=new THREE.Mesh(
+      new THREE.CylinderGeometry(.55,.55,.05,6),
+      new THREE.MeshPhongMaterial({color:0x001a2e,emissive:0x000a14,transparent:true,opacity:.4,wireframe:false})
+    );
+    const xo=col%2===0?0:.95;
+    h.position.set(col*1.65+14,row*1.9+xo-.5,-12);
+    h.userData={by:h.position.y,ph:Math.random()*Math.PI*2};
+    // hex border
+    const he=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.06,6),new THREE.MeshBasicMaterial({color:0x00fff0,wireframe:true,transparent:true,opacity:.12}));
+    h.add(he);
+    hexGroup.add(h);
+  }
+}
+scene.add(hexGroup);
+
+// ─── PARTICLE BURST SYSTEM ───────────────────────────────
+const burstGeo=new THREE.BufferGeometry();
+const bN=500,bPos=new Float32Array(bN*3),bVel=[];
+for(let i=0;i<bN;i++){bPos[i*3]=0;bPos[i*3+1]=0;bPos[i*3+2]=0;bVel.push({x:(Math.random()-.5)*.05,y:(Math.random()-.5)*.05,z:(Math.random()-.5)*.05,life:0,maxLife:0});}
+burstGeo.setAttribute('position',new THREE.BufferAttribute(bPos,3));
+const burst=new THREE.Points(burstGeo,new THREE.PointsMaterial({color:0x00fff0,size:.15,transparent:true,opacity:0}));
+scene.add(burst);
+let burstActive=false,burstTimer=0;
+function triggerBurst(x,y,z){
+  const pos=burstGeo.attributes.position.array;
+  for(let i=0;i<bN;i++){pos[i*3]=x;pos[i*3+1]=y;pos[i*3+2]=z;bVel[i]={x:(Math.random()-.5)*.3,y:(Math.random()-.5)*.3,z:(Math.random()-.5)*.3};}
+  burstGeo.attributes.position.needsUpdate=true;
+  burst.material.opacity=.8;burstActive=true;burstTimer=0;
+}
+
+// ─── DRAG ROTATION ───────────────────────────────────────
+let tRX=0,tRY=0,isDrag=false,lx=0,ly=0,autoR=true;
+document.addEventListener('mousedown',e=>{isDrag=true;lx=e.clientX;ly=e.clientY;autoR=false;document.getElementById('rhint').style.opacity='0';});
+document.addEventListener('mouseup',()=>isDrag=false);
+document.addEventListener('mousemove',e=>{if(!isDrag)return;tRY+=(e.clientX-lx)*.004;tRX+=(e.clientY-ly)*.003;lx=e.clientX;ly=e.clientY;});
+document.addEventListener('touchstart',e=>{isDrag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;autoR=false;},{passive:true});
+document.addEventListener('touchend',()=>isDrag=false);
+document.addEventListener('touchmove',e=>{if(!isDrag)return;tRY+=(e.touches[0].clientX-lx)*.004;tRX+=(e.touches[0].clientY-ly)*.003;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+
+// ─── ANIMATE ─────────────────────────────────────────────
+let T=0;
+function animate(){
+  requestAnimationFrame(animate);T+=.007;
+  if(autoR)tRY+=.002;
+  scene.rotation.y+=(tRY-scene.rotation.y)*.04;
+  scene.rotation.x+=(tRX-scene.rotation.x)*.04;
+
+  // core morph/spin
+  morphGroup.rotation.y=T*.35;
+  morphGroup.rotation.x=T*.18;
+  wfMesh.rotation.z=T*.12;
+  const pulse=1+Math.sin(T*1.5)*.04;
+  solidMesh.scale.set(pulse,pulse,pulse);
+  glowTorus.rotation.z=T*.4;
+  orb2.rotation.z=T*.25;orb2.rotation.y=T*.15;
+  orb3.rotation.x=T*.18;orb3.rotation.z=-T*.1;
+
+  // light pulse
+  pl1.intensity=2.5+Math.sin(T*2)*.5;
+  pl1.position.set(Math.sin(T*.7)*3,Math.cos(T*.5)*2,5);
+
+  // satellites orbit
+  sats.forEach(s=>{
+    s.userData.angle+=s.userData.speed;
+    const a=s.userData.angle,r=s.userData.r,phi=s.userData.phi;
+    s.position.set(Math.cos(a)*r,Math.sin(phi+T*.2)*2,Math.sin(a)*r);
+    s.rotation.x=T;s.rotation.y=T*1.3;
+  });
+
+  // floating cards bob
+  cardGroup.children.forEach(cg=>{
+    cg.position.y=cg.userData.baseY+Math.sin(T+cg.userData.phase)*.4;
+    cg.rotation.y=-.3+Math.sin(T*.5+cg.userData.phase)*.08;
+  });
+
+  // nebula rotate
+  nebulaGroup.children.forEach(np=>{np.rotation.y+=np.userData.speed;});
+  nebulaGroup.rotation.y=T*.05;
+
+  // hex wave
+  hexGroup.children.forEach(h=>{h.position.y=h.userData.by+Math.sin(T+h.userData.ph)*.25;h.material.opacity=.25+Math.abs(Math.sin(T*.4+h.userData.ph))*.25;});
+
+  // burst
+  if(burstActive){
+    burstTimer+=.02;
+    const pos=burstGeo.attributes.position.array;
+    for(let i=0;i<bN;i++){pos[i*3]+=bVel[i].x;pos[i*3+1]+=bVel[i].y;pos[i*3+2]+=bVel[i].z;}
+    burstGeo.attributes.position.needsUpdate=true;
+    burst.material.opacity=Math.max(0,.8-burstTimer*1.5);
+    if(burstTimer>0.6){burstActive=false;burst.material.opacity=0;}
+  }
+
+  // auto burst every 4s
+  if(Math.floor(T*100)%400===0) triggerBurst((Math.random()-.5)*10,(Math.random()-.5)*10,0);
+
+  renderer.render(scene,cam);
+}
+animate();
+
+// ─── RESIZE ──────────────────────────────────────────────
+window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// ─── PANELS ──────────────────────────────────────────────
+const allP=['about','skills','projects','wins','contact'];
+function sp(name){
+  allP.forEach(s=>{const p=document.getElementById('p-'+s);if(p)p.classList.add('off');});
+  const p=document.getElementById('p-'+name);if(p)p.classList.remove('off');
+  document.querySelectorAll('.nl').forEach((b,i)=>b.classList.toggle('on',allP[i]===name));
+  if(name==='skills')setTimeout(abars,250);
+  triggerBurst(-5,0,-2);
+}
+
+// ─── SKILL BARS ──────────────────────────────────────────
+const skills=[
+  {n:'Playwright',v:92,c:'#00fff0'},{n:'Cucumber BDD',v:88,c:'#00fff0'},
+  {n:'JavaScript ES6+',v:87,c:'#79c0ff'},{n:'Postman / API',v:85,c:'#79c0ff'},
+  {n:'Node.js',v:80,c:'#c084fc'},{n:'React.js',v:72,c:'#c084fc'},
+  {n:'C++',v:82,c:'#fb923c'},{n:'Java',v:78,c:'#fb923c'},
+];
+const sb=document.getElementById('sbars');
+skills.forEach(sk=>{
+  const id='b'+Math.random().toString(36).slice(2);
+  sb.innerHTML+=`<div class="sb-item"><div class="sb-top"><span class="sb-n">${sk.n}</span><span class="sb-v">${sk.v}%</span></div><div class="sb-track"><div class="sb-fill" id="${id}" style="width:0%;background:${sk.c}"></div></div></div>`;
+  sb.dataset[id]=sk.v;
+});
+function abars(){document.querySelectorAll('.sb-fill').forEach(b=>{const v=sb.dataset[b.id];if(v)b.style.width=v+'%';});}
+
+// ─── LOADING DONE ────────────────────────────────────────
+setTimeout(()=>{
+  const lo=document.getElementById('loader');
+  lo.classList.add('out');
+  setTimeout(()=>lo.remove(),800);
+},2400);
+</script>
+</body>
+</html>
